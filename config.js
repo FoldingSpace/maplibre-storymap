@@ -24,7 +24,7 @@ var config = {
     // Move through the chapters on its own (off here)
     auto: false,
 
-    title: 'Three places on the Point Grey campus',
+    title: 'Three places on the UBC Vancouver campus',
     subtitle: 'An example story. Replace it with your own.',
     byline: 'By Your Name',
     footer: 'Data: UBC Geodata (UBCGeodata/ubc-geospatial-opendata on GitHub). Imagery: EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024). Basemap: OpenFreeMap, OpenMapTiles, © OpenStreetMap contributors. Created using the <a href="https://github.com/opengeos/maplibre-gl-storymaps" target="_blank">MapLibre Storytelling</a> template, inspired by <a href="https://github.com/mapbox/storytelling" target="_blank">Mapbox Storytelling</a>.',
@@ -51,7 +51,7 @@ var config = {
             hidden: false,
             title: 'Land use areas on the campus',
             image: '',
-            description: 'Chapter two. UBC land use areas fade in. Each colour is a planning status: green for existing, orange for expansion, purple for 2050 and pink for future (2050 and later). Move the mouse over an area to see its name.',
+            description: 'Chapter two. UBC land use areas fade in. Each colour shows UBC\'s planning status for the area: green for existing, orange for expansion, purple for 2050 and pink for future (2050 and later). Move the mouse over an area to see its name.',
             location: { center: [-123.245, 49.26], zoom: 13, pitch: 0, bearing: 0 },
             mapAnimation: 'flyTo',
             rotateAnimation: false,
