@@ -100,6 +100,8 @@
             padding-bottom: 50vh;
             opacity: 0.12;
             transition: opacity 0.4s;
+            position: relative;   /* keeps the panels above the map at every opacity */
+            z-index: 1;
         }
 
         .step.active {
@@ -417,6 +419,11 @@
                     map.setFilter('landuse-hover', ['==', ['get', 'GLOBALID'], '']);
                     popup.remove();
                 }
+            });
+            // Scrolling to another chapter hides the outline and the popup.
+            window.addEventListener('scroll', function () {
+                map.setFilter('landuse-hover', ['==', ['get', 'GLOBALID'], '']);
+                popup.remove();
             });
 
             // The basemap draws trail numbers (on paths and tracks) in the same boxes as road numbers.
