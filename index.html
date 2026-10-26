@@ -65,18 +65,18 @@
         }
 
         .centered {
-            width: 50vw;
+            width: 40vw;
             margin: 0 auto;
         }
 
         .lefty {
-            width: 33vw;
-            margin-left: 5vw;
+            width: 28vw;
+            margin-left: 4vw;
         }
 
         .righty {
-            width: 33vw;
-            margin-left: 62vw;
+            width: 28vw;
+            margin-left: 68vw;
         }
 
         .fully {
@@ -85,28 +85,42 @@
         }
 
         .light {
-            color: #444;
-            background-color: #fafafa;
+            color: #333;
+            background-color: rgba(250, 250, 250, 0.85);
         }
 
         .dark {
             color: #fafafa;
-            background-color: #444;
+            background-color: rgba(50, 50, 50, 0.85);
         }
 
+        /* Class copy: lighter panels. The panel waiting below the active one is faint,
+           the panels have rounded corners and a soft shadow, and the text has less padding. */
         .step {
             padding-bottom: 50vh;
-            opacity: 0.25;
+            opacity: 0.12;
+            transition: opacity 0.4s;
         }
 
         .step.active {
-            opacity: 0.9;
+            opacity: 1;
         }
 
         .step div {
-            padding: 25px 50px;
-            line-height: 25px;
-            font-size: 13px;
+            padding: 8px 12px;
+            line-height: 1.45;
+            font-size: 14px;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .step div h3 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+        }
+
+        .step div p {
+            margin: 0;
         }
 
         .step img {
@@ -362,7 +376,59 @@
                 id: 'landuse-fill',
                 type: 'fill',
                 source: 'landuse',
-                paint: { 'fill-color': '#e8a33d', 'fill-opacity': 0 }
+                paint: {
+                    // A colour for each planning status in the data's OTHER field
+                    'fill-color': ['match', ['get', 'OTHER'],
+                        'Existing', '#1b9e77',
+                        'Expansion', '#d95f02',
+                        '2050', '#7570b3',
+                        'Future 2050+', '#e7298a',
+                        '#999999'],
+                    'fill-opacity': 0
+                }
+            });
+            // An outline that shows only the area under the mouse (its filter starts empty)
+            map.addLayer({
+                id: 'landuse-hover',
+                type: 'line',
+                source: 'landuse',
+                filter: ['==', ['get', 'GLOBALID'], ''],
+                paint: { 'line-color': '#000000', 'line-width': 3 }
+            });
+
+            // INTERACTIVITY IN ONE CHAPTER: when the mouse is over a land use area,
+            // outline it and show its name, land use and planning status.
+            // It works only while the land use layer is visible (the second chapter).
+            var popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
+            // The story's scrolling rows lie on top of the map, so this listens to the whole page.
+            document.addEventListener('mousemove', function (event) {
+                var overText = event.target.closest('.light, .dark');   // a story panel (its colour theme class)
+                var visible = !overText && map.getPaintProperty('landuse-fill', 'fill-opacity') > 0;
+                var rect = map.getCanvasContainer().getBoundingClientRect();
+                var point = [event.clientX - rect.left, event.clientY - rect.top];
+                var found = visible ? map.queryRenderedFeatures(point, { layers: ['landuse-fill'] }) : [];
+                if (found.length > 0) {
+                    var area = found[0].properties;
+                    map.setFilter('landuse-hover', ['==', ['get', 'GLOBALID'], area.GLOBALID]);
+                    popup.setLngLat(map.unproject(point))
+                        .setHTML('<strong>' + area.NAME + '</strong><br>' + area.LANDUSE + ', ' + area.OTHER)
+                        .addTo(map);
+                } else {
+                    map.setFilter('landuse-hover', ['==', ['get', 'GLOBALID'], '']);
+                    popup.remove();
+                }
+            });
+
+            // The basemap draws trail numbers (on paths and tracks) in the same boxes as road numbers.
+            // Keep the boxes on roads only, and show the trails' names instead, from zoom 13
+            // (the basemap shows path names only from zoom 15.5).
+            if (map.getLayer('highway-name-path')) {
+                map.setLayerZoomRange('highway-name-path', 13, 24);
+            }
+            ['highway-shield-non-us', 'highway-shield-us-interstate', 'road_shield_us'].forEach(function (id) {
+                if (map.getLayer(id)) {
+                    map.setFilter(id, ['all', map.getFilter(id), ['!', ['match', ['get', 'class'], ['path', 'track'], true, false]]]);
+                }
             });
 
             // A SHIFT OF STYLE: satellite imagery under the basemap's labels, starting at opacity 0.
