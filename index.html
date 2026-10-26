@@ -365,6 +365,22 @@
                 paint: { 'fill-color': '#e8a33d', 'fill-opacity': 0 }
             });
 
+            // A SHIFT OF STYLE: satellite imagery under the basemap's labels, starting at opacity 0.
+            // The third chapter in config.js fades it in, so the whole map changes its look there.
+            map.addSource('imagery', {
+                type: 'raster',
+                tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg'],
+                tileSize: 256,
+                attribution: 'EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024)'
+            });
+            var firstLabels = map.getStyle().layers.find(function (layer) { return layer.type === 'symbol'; });
+            map.addLayer({
+                id: 'imagery',
+                type: 'raster',
+                source: 'imagery',
+                paint: { 'raster-opacity': 0 }
+            }, firstLabels ? firstLabels.id : undefined);
+
             // Add 3D terrain if enabled
             if (config.use3dTerrain) {
                 map.addSource('terrain-dem', {

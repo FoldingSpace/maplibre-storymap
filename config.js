@@ -27,7 +27,7 @@ var config = {
     title: 'Three places on the Point Grey campus',
     subtitle: 'An example story. Replace it with your own.',
     byline: 'By Your Name',
-    footer: 'Data: UBC Geodata (UBCGeodata/ubc-geospatial-opendata on GitHub). Basemap: OpenFreeMap, OpenMapTiles, © OpenStreetMap contributors. Created using the <a href="https://github.com/opengeos/maplibre-gl-storymaps" target="_blank">MapLibre Storytelling</a> template, inspired by <a href="https://github.com/mapbox/storytelling" target="_blank">Mapbox Storytelling</a>.',
+    footer: 'Data: UBC Geodata (UBCGeodata/ubc-geospatial-opendata on GitHub). Imagery: EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024). Basemap: OpenFreeMap, OpenMapTiles, © OpenStreetMap contributors. Created using the <a href="https://github.com/opengeos/maplibre-gl-storymaps" target="_blank">MapLibre Storytelling</a> template, inspired by <a href="https://github.com/mapbox/storytelling" target="_blank">Mapbox Storytelling</a>.',
 
     // The chapters, in the order a reader scrolls through them
     chapters: [
@@ -63,15 +63,15 @@ var config = {
             id: 'water',
             alignment: 'center',
             hidden: false,
-            title: 'Toward the water',
+            title: 'Toward the water, from above',
             image: '',
-            description: 'Chapter three. The end of the example story.',
+            description: 'Chapter three. The map changes its whole look: satellite imagery fades in under the place names, and fades out if you scroll back up.',
             location: { center: [-123.262, 49.263], zoom: 14, pitch: 30, bearing: 40 },
             mapAnimation: 'flyTo',
             rotateAnimation: false,
             callback: '',
-            onChapterEnter: [],
-            onChapterExit: []
+            onChapterEnter: [ { layer: 'imagery', opacity: 1, duration: 2000 } ],
+            onChapterExit: [ { layer: 'imagery', opacity: 0, duration: 1000 } ]
         }
     ]
 };
