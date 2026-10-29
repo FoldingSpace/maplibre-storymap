@@ -64,7 +64,7 @@ var config = {
         {
             alignment: "right",
             title: "Land use areas on the campus",
-            description: "Chapter two. UBC land use areas fade in. Each colour shows UBC's planning status for the area: green for existing, orange for expansion, purple for 2050 and pink for future (2050 and later). Move the mouse over an area to see its name. You can also drag the map and zoom with the + and − buttons.",
+            description: "Chapter two. UBC land use areas fade in. Each colour shows UBC's planning status for the area: green for existing, orange for expansion, purple for 2050 and pink for future (2050 and later). Move the mouse over an area to see its name. In this chapter, you can also drag the map and zoom with the + and − buttons.",
             location: { center: [-123.245, 49.26], zoom: 13, pitch: 0, bearing: 0 },
             // The layer landuse, at opacity 0.6. (show: ["landuse"] would show it fully.)
             show: { landuse: 0.6 },
