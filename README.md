@@ -2,7 +2,7 @@
 
 This repository is a template for a scrollytelling story map. A reader scrolls down through panels of text. When a panel reaches the middle of the screen, the map moves to that panel's view. The map can also fade a layer in or out, or change its whole style. A chapter can let the reader explore the map with the mouse. You edit only `config.js`.
 
-See the example: https://ubc-geos472-fall2026.github.io/maplibre-storymap/
+See the example: https://foldingspace.github.io/maplibre-storymap/
 
 This repository is the class copy of the [MapLibre Storytelling](https://github.com/opengeos/maplibre-gl-storymaps) template by opengeos. This copy loads MapLibre GL JS 6.15.0.
 
