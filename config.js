@@ -74,7 +74,7 @@ var config = {
         {
             alignment: "center",
             title: "Toward the water, from above",
-            description: "Chapter three. The map changes to a second style: satellite imagery with place names on top. If you scroll back up, the map changes back to the first style. The imagery is made from many satellite pictures from 2024, with the clouds left out. So the imagery does not show a single day.",
+            description: "Chapter three. The map changes to a second style: satellite imagery with place names on top. If you scroll back up, the map changes back to the first style. The imagery is made from many satellite pictures from 2024.",
             location: { center: [-123.262, 49.263], zoom: 14, pitch: 30, bearing: 40 },
             // This chapter's own style, in place of the style at the top
             style: "./satellite-style.json"
