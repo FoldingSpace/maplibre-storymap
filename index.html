@@ -154,12 +154,35 @@
         /* Inset minimap styles */
         #inset-map {
             position: fixed;
-            width: 180px;
-            height: 180px;
+            width: 130px;
+            height: 130px;
             border: 2px solid rgba(255, 255, 255, 0.8);
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             z-index: 10;
+        }
+
+
+        /* A chapter's legend: a coloured square and its words on each line */
+        .legend {
+            margin: 6px 0 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .legend li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            line-height: 1.6;
+        }
+
+        .legend span {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
         }
 
         #inset-map.top-left {
@@ -180,6 +203,20 @@
         #inset-map.bottom-right {
             bottom: 30px;
             right: 10px;
+        }
+
+        /* A smaller overview map on a phone */
+        @media (max-width: 750px) {
+            #inset-map {
+                width: 96px;
+                height: 96px;
+            }
+
+            /* Above the map's credit line, which takes two lines on a phone */
+            #inset-map.bottom-right,
+            #inset-map.bottom-left {
+                bottom: 72px;
+            }
         }
 
         .inset-marker {
@@ -256,7 +293,7 @@
         }
 
         if (typeof config === 'undefined') {
-            showProblem('config.js has a typing error, so the story cannot start. ' + (window.configError || ''));
+            showProblem('config.js has a typing error. The story cannot start. ' + (window.configError || ''));
             throw new Error('The story stopped because of config.js.');
         }
 
@@ -373,6 +410,21 @@
                 var text = document.createElement('p');
                 text.innerHTML = record.description;
                 chapter.appendChild(text);
+            }
+
+            // A legend: one line for each { color, label } in the chapter's legend list
+            if (record.legend) {
+                var legend = document.createElement('ul');
+                legend.className = 'legend';
+                record.legend.forEach(function (entry) {
+                    var line = document.createElement('li');
+                    var square = document.createElement('span');
+                    square.style.background = entry.color;
+                    line.appendChild(square);
+                    line.appendChild(document.createTextNode(entry.label));
+                    legend.appendChild(line);
+                });
+                chapter.appendChild(legend);
             }
 
             // Another web page shown in the panel (embed), with optional text after it (descriptionAfter)
@@ -653,7 +705,7 @@
         function popupText(item, properties) {
             item.popup.forEach(function (field) {
                 if (properties[field] === undefined) {
-                    showProblem('The popup of the layer "' + item.id + '" names the field "' + field + '", but the data has no such field. The data\'s fields are: ' + Object.keys(properties).join(', ') + '.');
+                    showProblem('The popup of the layer "' + item.id + '" names the field "' + field + '". The data has no such field. The data\'s fields are: ' + Object.keys(properties).join(', ') + '.');
                 }
             });
             var html = '<strong>' + properties[item.popup[0]] + '</strong>';
@@ -765,10 +817,21 @@
             map.setStyle(wanted, { transformStyle: keepStoryLayers });
         }
 
+        var currentChapter = null;   // the chapter the reader is in
+
         function onChapterEnter(response) {
             var index = response.index;
             var chapter = config.chapters[index];
 
+            // scrollama can report the same chapter again when its panel changes size.
+            // The reader has not left the chapter. The map stays where the reader put it.
+            if (index === currentChapter) {
+                return;
+            }
+            currentChapter = index;
+            document.querySelectorAll('.step.active').forEach(function (step) {
+                step.classList.remove('active');
+            });
             response.element.classList.add('active');
             setExplore(chapter.exploreAllowed === true);
 
@@ -788,6 +851,10 @@
                 // showMarker: false hides the marker in this chapter
                 marker.getElement().style.display = chapter.showMarker === false ? 'none' : '';
             }
+            // showInset: false hides the small overview map in this chapter
+            if (insetMap) {
+                document.getElementById('inset-map').style.display = chapter.showInset === false ? 'none' : '';
+            }
             if (insetMap && insetMarker && chapter.location) {
                 insetMap.setCenter(chapter.location.center);
                 insetMarker.setLngLat(chapter.location.center);
@@ -806,7 +873,7 @@
                 if (typeof window[chapter.callback] === 'function') {
                     window[chapter.callback]();
                 } else {
-                    showProblem('Chapter ' + (index + 1) + ' has callback: "' + chapter.callback + '", but there is no function with that name in config.js.');
+                    showProblem('Chapter ' + (index + 1) + ' has callback: "' + chapter.callback + '". config.js has no function with that name.');
                 }
             }
             if (chapter.rotateAnimation) {
@@ -828,6 +895,9 @@
 
         function onChapterExit(response) {
             var chapter = config.chapters[response.index];
+            if (response.index === currentChapter) {
+                currentChapter = null;
+            }
             response.element.classList.remove('active');
             // Chapters written for the older template can still list onChapterExit
             if (chapter.onChapterExit) {
@@ -872,12 +942,19 @@
                 showChapterLayers(config.chapters[0]);
             });
 
+            // A layer needs data or tiles, unless the basemap already has a layer with its id
+            config.layers.forEach(function (item) {
+                if (!item.data && !item.tiles && !map.getLayer(item.id)) {
+                    showProblem('The layer "' + item.id + '" has no data and no tiles. Check the spelling of data or tiles in config.js.');
+                }
+            });
+
             // A name in a show list must be the id of a layer in the layers list
             config.chapters.forEach(function (chapter, index) {
                 for (var id in showList(chapter)) {
                     var known = config.layers.some(function (item) { return item.id === id; });
                     if (!known && !map.getLayer(id)) {
-                        showProblem('Chapter ' + (index + 1) + ' ("' + (chapter.title || '') + '") shows "' + id + '", but the layers list has no layer with this id. The capital letters must match.');
+                        showProblem('Chapter ' + (index + 1) + ' ("' + (chapter.title || '') + '") shows "' + id + '". The layers list has no layer with this id. The capital letters must match.');
                     }
                 }
             });

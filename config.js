@@ -57,15 +57,22 @@ var config = {
         {
             alignment: "left",
             title: "The Geography Building",
-            description: "Chapter one. The UBC Vancouver campus is on the traditional, ancestral and unceded territory of the <a href='https://www.musqueam.bc.ca/' target='_blank'>xʷməθkʷəy̓əm (Musqueam)</a> people.",
+            description: "Chapter one. The marker shows the Geography Building. The UBC Vancouver campus is on the traditional, ancestral and unceded territory of the <a href='https://www.musqueam.bc.ca/' target='_blank'>xʷməθkʷəy̓əm (Musqueam)</a> people.",
             location: { center: [-123.2561, 49.2660], zoom: 16, pitch: 45, bearing: -20 }
             // No show line: this chapter shows no layers
         },
         {
             alignment: "right",
             title: "Land use areas on the campus",
-            description: "Chapter two. UBC land use areas fade in. Each colour shows UBC's planning status for the area: green for existing, orange for expansion, purple for 2050 and pink for future (2050 and later). Move the mouse over an area to see its name. In this chapter, you can also drag the map and zoom with the + and − buttons.",
+            description: "Chapter two. UBC land use areas fade in. Each colour shows UBC's planning status for the area. The legend uses the words in UBC's data. Move the mouse over an area to see its name. In this chapter, you can also drag the map and zoom with the + and − buttons.",
             location: { center: [-123.245, 49.26], zoom: 13, pitch: 0, bearing: 0 },
+            // The legend: the colours of the landuse layer's paint, with their meaning
+            legend: [
+                { color: "#1b9e77", label: "Existing" },
+                { color: "#d95f02", label: "Expansion" },
+                { color: "#7570b3", label: "2050" },
+                { color: "#e7298a", label: "Future 2050+" }
+            ],
             // The layer landuse, at opacity 0.6. (show: ["landuse"] would show it fully.)
             show: { landuse: 0.6 },
             // The reader can move and zoom the map in this chapter
@@ -82,27 +89,28 @@ var config = {
         {
             alignment: "left",
             title: "Elevation and the colours of the imagery",
-            description: "Chapter four. It uses the same satellite style as chapter three. The chart below is calculated from the map's view. Each row of the chart is a range of elevation. The colours in a row are the most representative colours of the imagery at that elevation.",
+            description: "Chapter four. This chapter uses the same satellite style as chapter three. The chart below is calculated from the map's view. Each row of the chart is a range of elevation. The colours in a row are the most common colours of the imagery at that elevation. Each colour in a row is clearly different from the others.",
             location: { center: [-123.2580, 49.2690], zoom: 14.5, pitch: 0, bearing: 0 },
             style: "./satellite-style.json",
             exploreAllowed: true,
-            // Another web page, shown in the panel
             showMarker: false,
+            // Another web page, shown in the panel
             embed: "./elevation-colours.html",
-            embedHeight: 200,
-            descriptionAfter: "Move the mouse over the elevation of a row. The map turns almost white outside that range of elevation. Move the mouse over a colour. Only the pixels close to that colour, at that elevation, stay clear. In this chapter, you can also drag the map and zoom with the + and − buttons. The chart then changes."
+            embedHeight: 150,
+            descriptionAfter: "Move the mouse over the elevation of a row. The map turns almost white outside that range of elevation. Move the mouse over a colour. Only the pixels close to that colour, at that elevation, keep their colour. On a touch screen, tap an elevation or a colour. In this chapter, you can also drag the map and zoom with the + and − buttons. The chart then changes."
         },
         {
             alignment: "left",
             title: "The Musqueam Declaration",
-            description: "Chapter five. In 1976, Musqueam Elders and leaders signed the Musqueam Declaration. In it, the Musqueam people declare that they “hold aboriginal title to our land”. On 10 June 2026, Musqueam marked the Declaration's 50th anniversary. The map shows the area of the territory that the Declaration describes, from Howe Sound to the south bank of the Fraser River and out to the centre of Georgia Strait.",
+            description: "Chapter five. In 1976, Musqueam Elders and leaders signed the Musqueam Declaration. In it, the Musqueam people declare that they “hold aboriginal title to our land”. On 10 June 2026, Musqueam marked the Declaration's 50th anniversary. The map's view includes the lands and waters that the Declaration describes, from Howe Sound to the south bank of the Fraser River and out to the centre of Georgia Strait.",
             location: { center: [-123.1996, 49.2303], zoom: 9.3, pitch: 0, bearing: 0 },
             style: "./satellite-style.json",
-            // A video from Vimeo, shown in the panel
             showMarker: false,
+            showInset: false,
+            // A video from Vimeo, shown in the panel
             embed: "https://player.vimeo.com/video/1200153323?dnt=1",
             embedHeight: 215,
-            descriptionAfter: "Video: Musqueam Indian Band, \"Celebrating The 50th Anniversary Of The Musqueam Declaration\" (2026). Read more on Musqueam's page about <a href='https://www.musqueam.bc.ca/celebrating-the-50th-anniversary-of-the-musqueam-declaration/' target='_blank'>the 50th anniversary</a>, or read <a href='https://www.musqueam.bc.ca/wp-content/uploads/2018/06/musqueam_declaration.pdf' target='_blank'>the Declaration</a> (PDF)."
+            descriptionAfter: "Video: Musqueam Indian Band, <i>Celebrating The 50th Anniversary Of The Musqueam Declaration</i> (2026). Read more on Musqueam's page about <a href='https://www.musqueam.bc.ca/celebrating-the-50th-anniversary-of-the-musqueam-declaration/' target='_blank'>the 50th anniversary</a>, or read <a href='https://www.musqueam.bc.ca/wp-content/uploads/2018/06/musqueam_declaration.pdf' target='_blank'>the Declaration</a> (PDF)."
         },
         {
             alignment: "right",
@@ -113,7 +121,7 @@ var config = {
             showMarker: false,
             embed: "https://player.vimeo.com/video/490043811?h=45151a6105",
             embedHeight: 215,
-            descriptionAfter: "Video: Metro Vancouver, \"Pacific Spirit Regional Park Profile\" (2020)."
+            descriptionAfter: "Video: Metro Vancouver, <i>Pacific Spirit Regional Park Profile</i> (2020)."
         }
     ]
 };

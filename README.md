@@ -1,6 +1,6 @@
 # A scrollytelling story map, with MapLibre GL JS 6
 
-This repository is a template for a scrollytelling story map. A reader scrolls down through panels of text. When a panel reaches the middle of the screen, the map moves to that panel's view. The map can also fade a layer in or out, or change its whole style. A chapter can let the reader explore the map with the mouse. A chapter can also show another web page, such as a chart or a video. You edit only `config.js`.
+This repository is a template for a scrollytelling story map. A reader scrolls down through panels of text. When a panel reaches the middle of the screen, the map moves to that panel's view. The map can also fade a layer in or out, or change its whole style. A chapter can let the reader move and zoom the map. A chapter can also show another web page, such as a chart or a video. Of the template's files, you edit only `config.js`. You can also add your own files, such as data and images.
 
 See the example: https://foldingspace.github.io/maplibre-storymap/
 
@@ -26,20 +26,20 @@ A path in `config.js` starts at the folder that holds `index.html`. For example,
 
 Open `config.js`. Make all your changes to the settings between `var config = {` and the last `};`. Your own functions go below the last `};` (see "Run your own code at a chapter").
 
-Text and names in `config.js` go between two straight double quote marks, as in `"Chapter two."`. Inside text, you can write an apostrophe as it is: `"UBC's campus"`. Do not type a double quote mark inside text. For a link inside text, put single quote marks around the address: `"<a href='https://www.ubc.ca'>UBC</a>"`. Use straight quote marks (`"`), not curly ones (`“ ”`). Text pasted from a word processor may have curly ones.
+Text and names in `config.js` go between two straight double quote marks, as in `"Chapter two."`. Inside text, you can write an apostrophe as it is: `"UBC's campus"`. To quote words inside text, use curly quote marks (“ ”), as in the fifth chapter. For a link inside text, put single quote marks around the address: `"<a href='https://www.ubc.ca'>UBC</a>"`. Text pasted from a word processor may start and end with curly quote marks. Change those two to straight ones.
 
 A block is the text between a `{` and its `}`. Inside a block, put a comma between two settings. Put a comma between two blocks. A comma after the last setting or the last block is allowed but not needed. To add a setting to a block, add its line just after the block's `{`. End the line with a comma.
 
 ## How it works
 
-1. `index.html` reads `config.js`. It draws the map, and one text panel for each chapter. Each layer in `layers` starts invisible.
+1. `index.html` reads `config.js`. It draws the map and one text panel for each chapter. Each layer in `layers` starts invisible.
 2. When a panel reaches the middle of the screen, its chapter becomes active.
 3. The map moves to the chapter's `location`. If the chapter has its own `style`, the map changes to that style.
 4. The map shows each layer in the chapter's `show` list. Every other layer in `layers` fades out.
 
 ## Add a chapter
 
-`chapters` is a list of blocks, one for each chapter. To add a chapter, paste this block just before the `]` that ends `chapters`. Put a comma after the `}` of the block before it.
+`chapters` is a list of blocks, one for each chapter. To add a chapter, paste this block just before the `]` on the line above the last `};`. Put a comma after the `}` of the block before it.
 
 ```js
 {
@@ -60,7 +60,8 @@ Then change its settings. To remove a chapter, delete its whole block and one co
 | `description` | The chapter's text. HTML is allowed, for example `<br>` for a new line. |
 | `image` | The path of an image to show in the panel, for example `"./images/my-photo.jpg"`. Upload the image first. You can leave `image` out. |
 | `location` | The map's view: `center` as `[longitude, latitude]`, `zoom`, `pitch` (tilt, in degrees) and `bearing` (rotation, in degrees). Use `helper.html` to get these numbers. |
-| `show` | The layers that this chapter shows. `show: ["landuse"]` shows the layer whose `id` is `landuse`, fully visible. For two layers, put a comma between them: `show: ["landuse", "my_layer"]`. To set each layer's opacity, write each `id` with an opacity between `{` and `}`: `show: { landuse: 0.6 }`. Opacity 0 is invisible. Opacity 1 is fully visible. In this form, the `id` has no quote marks. A chapter without `show` shows no layer. |
+| `show` | The layers that this chapter shows. `show: ["landuse"]` shows the layer whose `id` is `landuse`, fully visible. For two layers, put a comma between them: `show: ["landuse", "my_layer"]`. To set each layer's opacity, write each `id` with an opacity between `{` and `}`: `show: { landuse: 0.6 }`, or for two layers `show: { landuse: 0.6, my_layer: 1 }`. Opacity 0 is invisible. Opacity 1 is fully visible. In this form, the `id` has no quote marks. A chapter without `show` shows no layer. |
+| `legend` | A legend in the panel: one `{ color: "#1b9e77", label: "Existing" }` for each line, between `[` and `]`, as in the example's second chapter. Use the same colours as in the layer's `paint`. You can leave `legend` out. |
 | `embed`, `embedHeight`, `descriptionAfter` | `embed` is the address of another web page to show in the panel. `embedHeight` is its height in pixels (300 if you leave it out). `descriptionAfter` is text under the page. See "Show another web page in a chapter". |
 | `style` | The chapter's own basemap style, in place of the `style` at the top of `config.js`. You can leave `style` out. See "Change the style at a chapter". |
 
@@ -75,7 +76,7 @@ More chapter settings are in "More settings".
 
 ## Add your own data
 
-Your GeoJSON must use longitude and latitude ([EPSG:4326](https://epsg.io/4326)). Upload it to your repository, for example as `data/my-data.geojson`. In `config.js`, paste this block just before the `]` that ends `layers`. Put a comma after the `}` of the block before it.
+Your GeoJSON must use longitude and latitude ([EPSG:4326](https://epsg.io/4326)). Upload it to your repository, for example as `data/my-data.geojson`. In `config.js`, paste this block just before the `],` that is above the line `// The chapters, in the order a reader scrolls through them`. Put a comma after the `}` of the block before it.
 
 ```js
 {
@@ -108,13 +109,11 @@ Then put the layer's `id` in the `show` list of each chapter that should show it
 
 To colour each value of a field differently, use a [`match` expression](https://maplibre.org/maplibre-style-spec/expressions/#match), as in the `landuse` block's `paint`.
 
-The same data can be two layers, each with its own `type` and `paint`. Each layer needs its own `id`. For example, copy the `landuse` block. Change its `id` to `landuse_lines`. Change its `type` to `"line"` and its `paint` to `{ "line-color": "#3388ff", "line-width": 2 }`. A later chapter with `show: ["landuse_lines"]` then shows the land use areas as blue lines.
-
 To remove the example layer, delete the `landuse` block and one comma next to it. Then delete the second chapter's `show` line, or put your own layer's `id` in it.
 
 ## When something goes wrong
 
-The page checks `config.js` when it opens. If it finds a problem, a red box at the top of the page says what the problem is. Fix the first problem in the box first.
+The page checks `config.js` when it opens. If it finds a problem, a red box at the top of the page says what the problem is. Start with the first problem in the box.
 
 The browser's developer console shows the same messages, and sometimes more. To open it, press `F12` (on a Mac, `Cmd`+`Option`+`I`). Or right-click the page, choose `Inspect`, then the `Console` tab. The basemap causes some yellow warnings, such as `Image "office" could not be loaded`. These are not your mistakes.
 
@@ -135,19 +134,19 @@ To add a popup to your own layer, add a `popup` line to its block, with the name
 
 The popup works only in chapters that show its layer. It does not open while the mouse is over a text panel. Show only one layer with a popup in each chapter. Where two such layers overlap, the popup shows only the first one in `layers`.
 
-In a chapter without `exploreAllowed: true`, the reader cannot drag or zoom the map. The mouse wheel, the arrow keys and the scroll bar scroll the story and change the chapter.
+In a chapter without `exploreAllowed: true`, the reader cannot move or zoom the map. The mouse wheel, the arrow keys and the scroll bar scroll the story and change the chapter.
 
-To let the reader move and zoom the map in a chapter, add `exploreAllowed: true,` to the chapter's block, as in the example's second chapter. In that chapter, the reader can drag the map, zoom with the `+` and `−` buttons, and double-click to zoom in. On a touch screen, two fingers move and zoom the map. On a touch screen, one finger on the map shows the message "Use two fingers to move the map". The mouse wheel, the arrow keys, the scroll bar and one finger on a touch screen still scroll the story. When the reader scrolls to the next chapter, the map moves to that chapter's view. Write in the chapter's `description` that the reader can move the map.
+To let the reader move and zoom the map in a chapter, add `exploreAllowed: true,` to the chapter's block, as in the example's second chapter. In that chapter, the reader can drag the map, zoom with the `+` and `−` buttons, and double-click to zoom in. On a touch screen, two fingers move and zoom the map. On a touch screen, one finger on the map shows the message "Use two fingers to move the map". The mouse wheel, the arrow keys and the scroll bar still scroll the story. One finger on a touch screen also scrolls the story. When the reader scrolls to the next chapter, the map moves to that chapter's view. Write in the chapter's `description` that the reader can move the map.
 
 ## Change the style at a chapter
 
-The third chapter has its own style: `style: "./satellite-style.json"`. The fourth to sixth chapters use this style too. A style is a file that lists a map's sources and layers. [Maputnik](https://maplibre.org/maputnik/) saves styles in this form. `satellite-style.json` has two sources: the [EOxCloudless](https://cloudless.eox.at) satellite tiles and [OpenFreeMap](https://openfreemap.org/)'s vector tiles. Its first layer draws the imagery. Its other layers draw road names, water names and place names on top.
+The third chapter has its own style: `style: "./satellite-style.json"`. The fourth to sixth chapters use this style too. A style is a file that lists a map's sources and layers. [Maputnik](https://maplibre.org/maputnik/) saves styles in this form. `satellite-style.json` has two sources: the [EOxCloudless](https://cloudless.eox.at) satellite tiles and [OpenFreeMap](https://openfreemap.org/)'s vector tiles.
 
 When the chapter becomes active, the new style replaces the basemap. The basemap does not fade. The layers in `layers` stay on the map. They are visible only if the chapter's `show` list names them. When the reader scrolls back up, the map changes back to the `style` at the top of `config.js`.
 
 **To make your own:** make a style in Maputnik. In Maputnik, click `Save` at the top. The `Save Style` window opens. Click `Save` to save the style as a JSON file. The browser may ask where to save the file and what to name it. If the browser does not ask, the file is in your Downloads folder, named after the style. Upload the file to your repository. In the chapter's block, add a line with the file's path, for example `style: "./my-style.json",`. If the block already has a `style` line, change the path in that line.
 
-To fade imagery in over the basemap, use a layer instead. For example, paste this block just before the `]` that ends `layers`. Put a comma after the `}` of the block before it. A chapter with `show: ["my_imagery"]` then fades the satellite imagery in under the basemap's names, icons and some other layers, such as buildings.
+To fade imagery in over the basemap, use a layer instead. For example, paste this block in `layers`, just before the `],` that is above the line `// The chapters, in the order a reader scrolls through them`. Put a comma after the `}` of the block before it. A chapter with `show: ["my_imagery"]` then fades the satellite imagery in under the basemap's names, icons and some other layers, such as buildings.
 
 ```js
 {
@@ -172,13 +171,13 @@ embedHeight: 300,
 descriptionAfter: "Text under the page.",
 ```
 
-The panel then shows the `title`, the `image`, the `description`, the page and the `descriptionAfter` text, in that order. The `embed` can be a path in your repository or an address on the web. With `alignment: "full"`, the panel is as wide as the window. The page fills the panel. The small overview map then covers a corner of the panel. Set `insetPosition` to a top corner, or set `inset` to `false`.
+The panel then shows the `title`, the `image`, the `description`, the `legend`, the page and the `descriptionAfter` text, in that order. The `embed` can be a path in your repository or an address on the web. With `alignment: "full"`, the panel is as wide as the window. The page fills the panel. The small overview map then covers a corner of the panel. Set `insetPosition` to a top corner. Or add `showInset: false,` to that chapter's block.
 
-If the page is taller than its box, the mouse wheel over it scrolls the page first, not the story. Move the mouse off the page to scroll the story. After you click inside the page, the arrow keys scroll that page. Click the map to scroll the story with the arrow keys again. Some websites do not let other sites show their pages. The panel then shows an empty box or an error. In Chrome the box is grey, with a picture of a torn page. The story shows no red box for this problem. Link to such a page in your `description` instead.
+If the page is taller than its `embedHeight`, the mouse wheel over it scrolls the page first, not the story. Move the mouse off the page to scroll the story. After you click inside the page, the arrow keys scroll that page. Click the map to scroll the story with the arrow keys again. Some websites do not let other sites show their pages. The panel then shows an empty box or an error. In Chrome the box is grey, with a picture of a torn page. The story shows no red box for this problem. Link to such a page in your `description` instead.
 
-The example's fifth and sixth chapters show videos from Vimeo. For a p5.js sketch, use its full-screen address: in the sketch's address, change `sketches` to `full`, for example `https://editor.p5js.org/YOUR-USERNAME/full/abc123`. For a video, open the video's page. Click `Share`, then `Embed`. Copy the address between the quote marks after `src=`, for example `embed: "https://player.vimeo.com/video/490043811?h=45151a6105",`.
+The example's fifth and sixth chapters show videos from Vimeo. For a p5.js sketch, use its full-screen address: in the sketch's address, change `sketches` to `full`, for example `https://editor.p5js.org/YOUR-USERNAME/full/abc123`. For a video, open the video's page. Click `Share`, then `Embed`. Copy the address between the quote marks after `src=`. Put it in the chapter's block, for example `embed: "https://player.vimeo.com/video/490043811?h=45151a6105",`.
 
-The example's fourth chapter shows `elevation-colours.html`. That page can use the story's `map`, because it comes from the same website. It fetches the imagery and the elevation for the map's view. Then it draws the chart.
+The example's fourth chapter shows `elevation-colours.html`. That page can use the story's `map`, because it comes from the same website. It also changes its own height to the height of its chart. Its `embedHeight` is only its height before the chart is drawn.
 
 ## Run your own code at a chapter
 
@@ -206,7 +205,7 @@ The settings at the top of `config.js`:
 | `showMarkers`, `markerColor` | `true` puts a marker at the centre of each chapter's view, in the colour set by `markerColor`. `false` shows no marker. |
 | `inset`, `insetStyle`, `insetPosition`, `insetZoom`, `insetOptions` | The small overview map in a corner: on or off, its style, its corner (`"top-left"`, `"top-right"`, `"bottom-left"` or `"bottom-right"`), its zoom, and the colour of its marker (`insetOptions: { markerColor: "orange" }`). |
 | `theme` | The colour of the panels: `"light"` or `"dark"`. |
-| `use3dTerrain` | Leave it `false`. Near Vancouver the template has no terrain. |
+| `use3dTerrain` | Leave it `false`. The template's 3D terrain does not cover Vancouver. |
 | `auto` | `true` moves through the chapters by itself. After the last chapter, the story starts again at the first chapter. |
 | `title`, `subtitle`, `byline` | The text at the top of the page. |
 | `footer` | The text at the bottom. It may contain HTML, such as links. Credit your data and your basemap here. |
@@ -220,6 +219,7 @@ More settings for a chapter:
 | `mapAnimation` | How the map moves to the view: `"flyTo"` (a curved flight, used when there is no `mapAnimation`), `"easeTo"` (a smooth slide) or `"jumpTo"` (no movement). |
 | `rotateAnimation` | `true` slowly turns the map once it arrives. |
 | `showMarker` | `false` hides the marker in this chapter (when `showMarkers` at the top of `config.js` is `true`). |
+| `showInset` | `false` hides the small overview map in this chapter (when `inset` at the top of `config.js` is `true`). |
 | `exploreAllowed` | `true` lets the reader move and zoom the map in this chapter. See "Add interactivity to a chapter". |
 | `callback` | The name of your own function to run when the chapter becomes active. See "Run your own code at a chapter". |
 
@@ -236,6 +236,6 @@ More settings for a chapter:
 
 ## Credits
 
-Template: [MapLibre Storytelling](https://github.com/opengeos/maplibre-gl-storymaps) by opengeos (MIT licence, in [`LICENSE`](LICENSE)), inspired by [Mapbox Storytelling](https://github.com/mapbox/storytelling). Changed for GEOS 472 at UBC (October 2026): MapLibre GL JS 6.15.0 loaded as a module; scrollama pinned to 3.2.0; a keyless basemap (OpenFreeMap); the layers and their looks listed in `config.js`, with each chapter's `show` list; a `style` setting for each chapter; an `exploreAllowed` setting that lets the reader move and zoom the map in a chapter; problems in `config.js` shown on the page; a six-chapter example on and around the UBC Vancouver campus with UBC Geodata land use (coloured by planning status, with a mouseover) and EOxCloudless imagery in a second style; a chart of elevation and colour in an embedded page; two embedded videos; no stock photographs.
+Template: [MapLibre Storytelling](https://github.com/opengeos/maplibre-gl-storymaps) by opengeos (MIT licence, in [`LICENSE`](LICENSE)), inspired by [Mapbox Storytelling](https://github.com/mapbox/storytelling). Changed at UBC in October 2026.
 
 Basemap: [OpenFreeMap](https://openfreemap.org/), [OpenMapTiles](https://openmaptiles.org/), © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). Example data: [UBC Geodata](https://github.com/UBCGeodata/ubc-geospatial-opendata). Imagery: EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024). Elevation: Terrain Tiles, accessed on 29 October 2026 from https://registry.opendata.aws/terrain-tiles. Videos: Musqueam Indian Band and Metro Vancouver, on Vimeo.

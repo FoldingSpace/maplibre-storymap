@@ -24,19 +24,27 @@
             gap: 2px;
         }
 
+        /* Each elevation is a small button: move the mouse over it (or tap it) */
         .label {
-            padding-right: 6px;
+            padding: 0 6px;
             text-align: right;
             white-space: nowrap;
-            line-height: 20px;
+            line-height: 18px;
+            border: 1px solid #8a94a6;
+            border-radius: 4px;
+            background: #eef1f6;
+            cursor: pointer;
         }
 
         .label:hover {
-            font-weight: bold;
+            background: #2f4a7a;
+            border-color: #2f4a7a;
+            color: #ffffff;
         }
 
         .cell {
             height: 20px;
+            cursor: pointer;
         }
 
         .cell:hover {
@@ -56,7 +64,7 @@
         // For the map's current view, it fetches the satellite imagery and the elevation tiles.
         // It samples both every few pixels.
         // The chart is a grid. Each row is a range of elevation. Each column is one of the row's
-        // most representative colours of the imagery, chosen to differ from each other.
+        // most common colours of the imagery, chosen to differ from each other.
         // Moving the mouse over a row's label or a cell washes out the other pixels of the map
         // (covers them with white).
 
@@ -109,6 +117,25 @@
             return [x, y];
         }
 
+        // Terrarium tiles store elevation in metres as red × 256 + green + blue / 256 − 32768.
+        // Between pixel centres, the elevation is interpolated from the four nearest pixels (bilinear interpolation).
+        // The edges of a band then follow the ground more smoothly.
+        function elevationAt(dem, x, y) {
+            function pixel(px, py) {
+                px = Math.max(0, Math.min(255, px));
+                py = Math.max(0, Math.min(255, py));
+                var j = (py * 256 + px) * 4;
+                return dem[j] * 256 + dem[j + 1] + dem[j + 2] / 256 - 32768;
+            }
+            var x0 = Math.floor(x - 0.5);
+            var y0 = Math.floor(y - 0.5);
+            var fx = x - 0.5 - x0;
+            var fy = y - 0.5 - y0;
+            var top = pixel(x0, y0) * (1 - fx) + pixel(x0 + 1, y0) * fx;
+            var bottom = pixel(x0, y0 + 1) * (1 - fx) + pixel(x0 + 1, y0 + 1) * fx;
+            return top * (1 - fy) + bottom * fy;
+        }
+
         // ---------- sampling ----------
 
         var run = 0;
@@ -141,7 +168,8 @@
                         imageryUrl: tileUrl(IMAGERY, imageryZoom, Math.floor(a[0] / 256), Math.floor(a[1] / 256)),
                         imageryIndex: (Math.floor(a[1]) % 256) * 256 + (Math.floor(a[0]) % 256),
                         elevationUrl: tileUrl(ELEVATION, elevationZoom, Math.floor(b[0] / 256), Math.floor(b[1] / 256)),
-                        elevationIndex: (Math.floor(b[1]) % 256) * 256 + (Math.floor(b[0]) % 256)
+                        elevationX: b[0] - Math.floor(b[0] / 256) * 256,   // the position inside the elevation tile
+                        elevationY: b[1] - Math.floor(b[1] / 256) * 256
                     };
                     urls[point.imageryUrl] = true;
                     urls[point.elevationUrl] = true;
@@ -166,9 +194,7 @@
                 var image = loaded[p.imageryUrl];
                 var dem = loaded[p.elevationUrl];
                 var i = p.imageryIndex * 4;
-                var j = p.elevationIndex * 4;
-                // Terrarium tiles store elevation in metres as red × 256 + green + blue / 256 − 32768
-                var elevation = dem[j] * 256 + dem[j + 1] + dem[j + 2] / 256 - 32768;
+                var elevation = elevationAt(dem, p.elevationX, p.elevationY);
                 return { x: p.x, y: p.y, elevation: elevation, r: image[i], g: image[i + 1], b: image[i + 2] };
             });
             drawChart();
@@ -196,7 +222,7 @@
                 s.band = bands[index];
             });
 
-            // The most representative colours of each band. Colours are first grouped in 16 levels
+            // The most common colours of each band. Colours are first grouped in 16 levels
             // of red, green and blue. The commonest group is chosen first. Each next group must
             // differ from every group already chosen by at least MIN_DIFFERENCE.
             bands.forEach(function (band) {
@@ -243,6 +269,7 @@
                 label.className = 'label';
                 label.innerText = band.label;
                 label.addEventListener('mouseenter', function () { wash(band, null); });
+                label.addEventListener('click', function () { wash(band, null); });   // a tap on a touch screen
                 label.addEventListener('mouseleave', clearWash);
                 chart.appendChild(label);
                 for (var k = 0; k < COLOURS; k++) {
@@ -253,12 +280,21 @@
                         cell.style.background = 'rgb(' + colour.r + ',' + colour.g + ',' + colour.b + ')';
                         cell.title = Math.round(colour.share * 100) + ' % of this row';
                         cell.addEventListener('mouseenter', wash.bind(null, band, colour));
+                        cell.addEventListener('click', wash.bind(null, band, colour));   // a tap on a touch screen
                         cell.addEventListener('mouseleave', clearWash);
                     }
                     chart.appendChild(cell);
                 }
             });
-            document.getElementById('status').innerText = 'Elevation and colour in this view (' + samples.length + ' samples):';
+            document.getElementById('status').innerText = 'Move the mouse over an elevation or a colour, or tap one (' + samples.length + ' samples in this view):';
+            fitFrame();
+        }
+
+        // Make this page's box in the story's panel as tall as the chart. The panel then has no empty space under the chart.
+        function fitFrame() {
+            if (window.frameElement) {
+                window.frameElement.style.height = Math.ceil(document.body.getBoundingClientRect().height + 4) + 'px';
+            }
         }
 
         // ---------- washing out the map ----------
@@ -290,24 +326,31 @@
             return Math.sqrt(dr * dr + dg * dg + db * db);
         }
 
-        // Cover with white every sample outside the band, or (with a colour) far from that colour
+        // Cover with white every sample outside the band, or (with a colour) far from that colour.
+        // The white is drawn as one pixel for each sample. Then it is stretched over the map. Its edges are then soft.
         function wash(band, colour) {
             if (!chapterIsActive()) {
                 return;   // the chart's chapter is not the one on the map
             }
             var canvas = washCanvas();
-            var context = canvas.getContext('2d');
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            var columns = Math.ceil(canvas.width / STEP);
+            var rows = Math.ceil(canvas.height / STEP);
+            var small = new OffscreenCanvas(columns, rows);
+            var smallContext = small.getContext('2d');
+            smallContext.fillStyle = 'rgba(255, 255, 255, 0.85)';
             samples.forEach(function (s) {
                 var keep = s.band === band;
                 if (keep && colour) {
                     keep = difference(s, colour) <= COLOUR_DISTANCE;
                 }
                 if (!keep) {
-                    context.fillRect(s.x, s.y, STEP, STEP);
+                    smallContext.fillRect(s.x / STEP, s.y / STEP, 1, 1);
                 }
             });
+            var context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.imageSmoothingEnabled = true;
+            context.drawImage(small, 0, 0, columns * STEP, rows * STEP);
         }
 
         function clearWash() {
