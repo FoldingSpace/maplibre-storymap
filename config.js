@@ -57,7 +57,7 @@ var config = {
         {
             alignment: "left",
             title: "The Geography Building",
-            description: "Chapter one. The map starts here. The UBC Vancouver campus is on the traditional, ancestral and unceded territory of the <a href='https://www.musqueam.bc.ca/' target='_blank'>xʷməθkʷəy̓əm (Musqueam)</a> people.",
+            description: "Chapter one. The UBC Vancouver campus is on the traditional, ancestral and unceded territory of the <a href='https://www.musqueam.bc.ca/' target='_blank'>xʷməθkʷəy̓əm (Musqueam)</a> people.",
             location: { center: [-123.2561, 49.2660], zoom: 16, pitch: 45, bearing: -20 }
             // No show line: this chapter shows no layers
         },
