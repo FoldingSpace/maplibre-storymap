@@ -97,7 +97,7 @@ var config = {
             // Another web page, shown in the panel
             embed: "./elevation-colours.html",
             embedHeight: 150,
-            descriptionAfter: "Move the mouse over the elevation of a row. The map turns almost white outside that range of elevation. Move the mouse over a colour. Only the pixels close to that colour, at that elevation, keep their colour. On a touch screen, tap an elevation or a colour. In this chapter, you can also drag the map and zoom with the + and − buttons. The chart then changes."
+            descriptionAfter: "Move the mouse over the elevation of a row. The map turns almost white outside that range of elevation. Move the mouse over a colour. Only the pixels close to that colour, at that elevation, keep their colour. The chart then shows the hex code of that colour, for example #4a5d3b. On a touch screen, tap an elevation or a colour. Drag the slider to change the saturation of the imagery on the map and in the chart. Saturation is how strong the colours are. The slider starts at +60 %, so the colours are stronger than in chapters three, five and six. In this chapter, you can also drag the map and zoom with the + and − buttons. The chart then changes."
         },
         {
             alignment: "left",

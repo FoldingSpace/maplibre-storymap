@@ -13,6 +13,24 @@
             background: #ffffff;
         }
 
+        #saturation-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 2px 0 4px 0;
+        }
+
+        #saturation {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Room for "−100 %", so the slider keeps its width as the value changes */
+        #saturation-value {
+            min-width: 4em;
+            text-align: right;
+        }
+
         #status {
             margin: 2px 0 6px 0;
             color: #555555;
@@ -45,6 +63,23 @@
         .cell {
             height: 20px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 9px;
+            white-space: nowrap;
+        }
+
+        /* The colour under the mouse (or tapped) shows its hex code, for example #4a5d3b */
+        .cell.coloured:hover::after {
+            content: attr(data-hex);
+            letter-spacing: -0.3px;   /* so the code fits inside the black outline in a phone's narrow cells */
+        }
+
+        /* A thin grey edge, so a very light colour is not mistaken for an empty cell */
+        .cell.coloured {
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
         }
 
         .cell:hover {
@@ -55,6 +90,10 @@
 </head>
 
 <body>
+    <label id="saturation-control">Saturation of the imagery:
+        <input type="range" id="saturation" min="-100" max="100" step="10" value="60">
+        <span id="saturation-value">+60 %</span>
+    </label>
     <div id="status">Reading the map…</div>
     <div id="chart"></div>
 
@@ -67,6 +106,7 @@
         // most common colours of the imagery, chosen to differ from each other.
         // Moving the mouse over a row's label or a cell washes out the other pixels of the map
         // (covers them with white).
+        // The slider changes the saturation of the imagery (how strong its colours are), on the map and in the chart.
 
         var map = window.parent.map;
         var parentDocument = window.parent.document;
@@ -75,10 +115,13 @@
         var IMAGERY = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg';
         var ELEVATION = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
         var COLOURS = 5;            // colours in each row (the columns of the grid)
-        var MIN_DIFFERENCE = 40;    // the smallest difference between two chosen colours of a row
-        var COLOUR_DISTANCE = 30;   // how close a pixel's colour must be to the colour under the mouse
+        var MIN_DIFFERENCE = 60;    // the smallest difference between two chosen colours of a row
+        var COLOUR_DISTANCE = MIN_DIFFERENCE / 2;   // how close a pixel's colour must be to the colour under the mouse
+                                                    // (half of MIN_DIFFERENCE, so no pixel is close to two colours of a row)
+        var IMAGERY_LAYER = 'satellite';   // the id of the imagery layer in satellite-style.json
 
-        var samples = [];   // { x, y, elevation, r, g, b, band }
+        var samples = [];   // { x, y, elevation, r, g, b, imageryR, imageryG, imageryB, band }
+                            // imageryR, imageryG, imageryB: the colour in the imagery tile. r, g, b: that colour with the slider's saturation applied.
         var tiles = {};     // tile pixels, kept once they are loaded
 
         // Is this page's chapter the active one?
@@ -147,6 +190,7 @@
             run = run + 1;
             var thisRun = run;
             clearWash();
+            paintMap(saturation);   // the imagery layer may have loaded only after the reader entered the chapter (onChapterChange then found no layer to change)
             document.getElementById('status').innerText = 'Reading the map…';
 
             var canvas = map.getCanvas();
@@ -195,9 +239,81 @@
                 var dem = loaded[p.elevationUrl];
                 var i = p.imageryIndex * 4;
                 var elevation = elevationAt(dem, p.elevationX, p.elevationY);
-                return { x: p.x, y: p.y, elevation: elevation, r: image[i], g: image[i + 1], b: image[i + 2] };
+                return { x: p.x, y: p.y, elevation: elevation, imageryR: image[i], imageryG: image[i + 1], imageryB: image[i + 2] };
             });
+            applySaturation();
             drawChart();
+        }
+
+        // ---------- saturation ----------
+
+        var START_SATURATION = 60;           // the slider's value each time the reader enters this chapter
+        var saturation = START_SATURATION;   // the slider's value: −100 % to +100 %
+
+        // A positive saturation moves a sample's colour away from its grey (the average of its red, green and blue).
+        // A negative value moves it toward its grey.
+        // At 100 %, it is twice as far from its grey (but red, green and blue stay between 0 and 255). At −100 %, it is its grey.
+        // The map's raster-saturation does the same, so the chart's colours are the colours on the map.
+        function applySaturation() {
+            var factor = 1 + saturation / 100;
+            samples.forEach(function (s) {
+                var grey = (s.imageryR + s.imageryG + s.imageryB) / 3;
+                s.r = Math.max(0, Math.min(255, Math.round(grey + (s.imageryR - grey) * factor)));
+                s.g = Math.max(0, Math.min(255, Math.round(grey + (s.imageryG - grey) * factor)));
+                s.b = Math.max(0, Math.min(255, Math.round(grey + (s.imageryB - grey) * factor)));
+            });
+        }
+
+        // MapLibre's raster-saturation runs from −1 to 1. This function gives the raster-saturation that matches the slider's value.
+        // MapLibre's own formula uses 1.001 in place of 1, so that it never divides by zero.
+        function rasterSaturation(percent) {
+            return percent <= 0 ? percent / 100 : 1.001 - 1 / (1 + percent / 100);
+        }
+
+        function showSaturation() {
+            document.getElementById('saturation').value = saturation;
+            document.getElementById('saturation-value').innerText = (saturation > 0 ? '+' : saturation < 0 ? '−' : '') + Math.abs(saturation) + ' %';
+        }
+
+        function paintMap(percent) {
+            if (map && map.getLayer(IMAGERY_LAYER)) {
+                map.setPaintProperty(IMAGERY_LAYER, 'raster-saturation', rasterSaturation(percent));
+            }
+        }
+
+        function setSaturation(percent) {
+            saturation = percent;
+            showSaturation();
+            paintMap(percent);
+        }
+
+        document.getElementById('saturation').addEventListener('input', function (event) {
+            if (!chapterIsActive()) {
+                showSaturation();   // the map is in another chapter, so the slider goes back to its last value in this chapter
+                return;
+            }
+            setSaturation(Number(event.target.value));
+            clearWash();
+            if (samples.length > 0) {
+                applySaturation();
+                drawChart();
+            }
+        });
+
+        // Chapters three, five and six use the same style as this chapter. The story does not load that style again between them.
+        // Without this function, the saturation would stay on the map in those chapters.
+        // When the reader leaves this chapter, the map's imagery goes back to its own colours.
+        // Each time the reader enters this chapter, the slider starts at START_SATURATION.
+        function onChapterChange() {
+            if (chapterIsActive()) {
+                setSaturation(START_SATURATION);
+                if (samples.length > 0) {
+                    applySaturation();
+                    drawChart();
+                }
+            } else {
+                paintMap(0);
+            }
         }
 
         // ---------- the chart ----------
@@ -277,8 +393,12 @@
                     cell.className = 'cell';
                     var colour = band.colours[k];
                     if (colour) {
+                        cell.classList.add('coloured');
                         cell.style.background = 'rgb(' + colour.r + ',' + colour.g + ',' + colour.b + ')';
-                        cell.title = Math.round(colour.share * 100) + ' % of this row';
+                        var hex = '#' + [colour.r, colour.g, colour.b].map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
+                        cell.dataset.hex = hex;
+                        cell.style.color = colour.r * 0.299 + colour.g * 0.587 + colour.b * 0.114 > 140 ? '#000000' : '#ffffff';   // black text on a light colour, white on a dark one
+                        cell.title = hex + ': ' + Math.round(colour.share * 100) + ' % of this row';
                         cell.addEventListener('mouseenter', wash.bind(null, band, colour));
                         cell.addEventListener('click', wash.bind(null, band, colour));   // a tap on a touch screen
                         cell.addEventListener('mouseleave', clearWash);
@@ -341,7 +461,7 @@
             samples.forEach(function (s) {
                 var keep = s.band === band;
                 if (keep && colour) {
-                    keep = difference(s, colour) <= COLOUR_DISTANCE;
+                    keep = difference(s, colour) < COLOUR_DISTANCE;
                 }
                 if (!keep) {
                     smallContext.fillRect(s.x / STEP, s.y / STEP, 1, 1);
@@ -366,6 +486,18 @@
             map.on('movestart', clearWash);
             map.on('moveend', update);
             window.parent.addEventListener('scroll', clearWash);
+            // When the story loads this chapter's style, the imagery layer is new. It gets the slider's saturation.
+            map.on('style.load', function () {
+                if (chapterIsActive()) {
+                    paintMap(saturation);
+                }
+            });
+            // The story marks the active chapter's panel with the class "active".
+            // When the class of this page's panel changes, onChapterChange checks whether this chapter is active.
+            var step = window.frameElement && window.frameElement.closest('.step');
+            if (step) {
+                new MutationObserver(onChapterChange).observe(step, { attributes: true, attributeFilter: ['class'] });
+            }
             update();
         } else {
             document.getElementById('status').innerText = 'This page works only inside the story.';

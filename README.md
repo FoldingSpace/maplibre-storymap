@@ -177,7 +177,7 @@ If the page is taller than its `embedHeight`, the mouse wheel over it scrolls th
 
 The example's fifth and sixth chapters show videos from Vimeo. For a p5.js sketch, use its full-screen address: in the sketch's address, change `sketches` to `full`, for example `https://editor.p5js.org/YOUR-USERNAME/full/abc123`. For a video, open the video's page. Click `Share`, then `Embed`. Copy the address between the quote marks after `src=`. Put it in the chapter's block, for example `embed: "https://player.vimeo.com/video/490043811?h=45151a6105",`.
 
-The example's fourth chapter shows `elevation-colours.html`. That page can use the story's `map`, because it comes from the same website. It also changes its own height to the height of its chart. Its `embedHeight` is only its height before the chart is drawn.
+The example's fourth chapter shows `elevation-colours.html`. That page can use the story's `map`, because it comes from the same website. It also changes its own height to the height of its chart. Its `embedHeight` is only its height before the chart is drawn. Its slider changes the `raster-saturation` of the imagery layer `satellite`, with `map.setPaintProperty`. When the reader leaves the chapter, the page sets the `raster-saturation` back to 0. Without that, the change would stay on the map in the chapters that use the same style.
 
 ## Run your own code at a chapter
 
