@@ -102,6 +102,11 @@
             transition: opacity 0.4s;
             position: relative;   /* keeps the panels above the map at every opacity */
             z-index: 1;
+            pointer-events: none;   /* the mouse works on the map around a panel */
+        }
+
+        .step div {
+            pointer-events: auto;   /* links and text in the panel still work with the mouse */
         }
 
         .step.active {
@@ -185,6 +190,11 @@
             border-radius: 50%;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
+        /* No hand cursor over the map, except in a chapter with exploreAllowed: true */
+        #map:not(.exploring) .maplibregl-canvas-container {
+            cursor: default;
+        }
+
         /* The box that lists problems in config.js */
         #problems {
             position: fixed;
@@ -407,8 +417,45 @@
             zoom: config.chapters[0].location.zoom,
             bearing: config.chapters[0].location.bearing,
             pitch: config.chapters[0].location.pitch,
-            interactive: false
+            // The message that MapLibre shows in a chapter with exploreAllowed: true
+            locale: {
+                'CooperativeGesturesHandler.WindowsHelpText': 'Use two fingers to move the map',
+                'CooperativeGesturesHandler.MacHelpText': 'Use two fingers to move the map',
+                'CooperativeGesturesHandler.MobileHelpText': 'Use two fingers to move the map'
+            }
         });
+
+        // The reader can move and zoom the map only in a chapter with exploreAllowed: true.
+        // The mouse wheel, the arrow keys and the scroll bar always scroll the story.
+        ['scrollZoom', 'boxZoom', 'dragRotate', 'dragPan', 'keyboard', 'doubleClickZoom', 'touchZoomRotate', 'touchPitch'].forEach(function (name) {
+            map[name].disable();
+        });
+        map.touchZoomRotate.disableRotation();
+        var zoomButtons = new maplibregl.NavigationControl({ showCompass: false });
+        var exploring = false;
+
+        function setExplore(on) {
+            if (on === exploring) {
+                return;
+            }
+            exploring = on;
+            ['dragPan', 'doubleClickZoom', 'touchZoomRotate'].forEach(function (name) {
+                if (on) {
+                    map[name].enable();
+                } else {
+                    map[name].disable();
+                }
+            });
+            if (on) {
+                map.cooperativeGestures.enable();   // on a touch screen, one finger scrolls the story. Two fingers move the map.
+                map.addControl(zoomButtons, 'top-right');
+                document.getElementById('map').classList.add('exploring');
+            } else {
+                map.cooperativeGestures.disable();
+                map.removeControl(zoomButtons);
+                document.getElementById('map').classList.remove('exploring');
+            }
+        }
 
         // Your own functions in config.js (see "Run your own code at a chapter" in README.md) can use map and maplibregl
         window.map = map;
@@ -700,6 +747,8 @@
             var chapter = config.chapters[index];
 
             response.element.classList.add('active');
+            setExplore(chapter.exploreAllowed === true);
+
             var move = chapter.mapAnimation || 'flyTo';
             if (['flyTo', 'easeTo', 'jumpTo'].indexOf(move) === -1) {
                 showProblem('Chapter ' + (index + 1) + ' has mapAnimation: "' + move + '". Use "flyTo", "easeTo" or "jumpTo".');

@@ -27,7 +27,7 @@ var config = {
     title: "Three places on the UBC Vancouver campus",
     subtitle: "An example story. Replace it with your own.",
     byline: "By Your Name",
-    footer: "Data: UBC Geodata (UBCGeodata/ubc-geospatial-opendata on GitHub). Imagery: EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024). Basemap: OpenFreeMap, OpenMapTiles, © OpenStreetMap contributors. Created using the <a href='https://github.com/opengeos/maplibre-gl-storymaps' target='_blank'>MapLibre Storytelling</a> template, inspired by <a href='https://github.com/mapbox/storytelling' target='_blank'>Mapbox Storytelling</a>.",
+    footer: "Data: <a href='https://github.com/UBCGeodata/ubc-geospatial-opendata' target='_blank'>UBC Geodata</a>. Imagery: EOxCloudless <a href='https://cloudless.eox.at' target='_blank'>https://cloudless.eox.at</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024). Basemap: <a href='https://openfreemap.org/' target='_blank'>OpenFreeMap</a>, <a href='https://openmaptiles.org/' target='_blank'>OpenMapTiles</a>, © <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap contributors</a>. Created using the <a href='https://github.com/opengeos/maplibre-gl-storymaps' target='_blank'>MapLibre Storytelling</a> template, inspired by <a href='https://github.com/mapbox/storytelling' target='_blank'>Mapbox Storytelling</a>.",
 
     // The layers your story can show. Each layer starts invisible.
     // A chapter shows a layer when the layer's id is in the chapter's show list.
@@ -57,17 +57,19 @@ var config = {
         {
             alignment: "left",
             title: "The Geography Building",
-            description: "Chapter one. The map starts here. The UBC Vancouver campus is on the traditional, ancestral and unceded territory of the xʷməθkʷəy̓əm (Musqueam) people.",
+            description: "Chapter one. The map starts here. The UBC Vancouver campus is on the traditional, ancestral and unceded territory of the <a href='https://www.musqueam.bc.ca/' target='_blank'>xʷməθkʷəy̓əm (Musqueam)</a> people.",
             location: { center: [-123.2561, 49.2660], zoom: 16, pitch: 45, bearing: -20 }
             // No show line: this chapter shows no layers
         },
         {
             alignment: "right",
             title: "Land use areas on the campus",
-            description: "Chapter two. UBC land use areas fade in. Each colour shows UBC's planning status for the area: green for existing, orange for expansion, purple for 2050 and pink for future (2050 and later). Move the mouse over an area to see its name.",
+            description: "Chapter two. UBC land use areas fade in. Each colour shows UBC's planning status for the area: green for existing, orange for expansion, purple for 2050 and pink for future (2050 and later). Move the mouse over an area to see its name. You can also drag the map and zoom with the + and − buttons.",
             location: { center: [-123.245, 49.26], zoom: 13, pitch: 0, bearing: 0 },
             // The layer landuse, at opacity 0.6. (show: ["landuse"] would show it fully.)
-            show: { landuse: 0.6 }
+            show: { landuse: 0.6 },
+            // The reader can move and zoom the map in this chapter
+            exploreAllowed: true
         },
         {
             alignment: "center",
