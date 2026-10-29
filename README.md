@@ -174,7 +174,7 @@ Then, in `config.js`, in the block of the chapter where your code should run, ad
 
 ## Test on your own computer
 
-You can test without committing. You need Python and a copy of the files on your computer. To get the copy, click `Code` on your repository's page, then `Download ZIP`. Then unzip the ZIP file, if your computer has not already unzipped it. The unzipped folder is named after your repository, with `-main` at the end. Open a terminal in that folder and run `python -m http.server`. On some computers the command is `python3 -m http.server`. On Windows it may be `py -m http.server`. Then open http://localhost:8000/ in your browser. Changes you make in this copy are not on GitHub. To publish them, upload the changed files to your repository (see "Edit and add files on GitHub").
+You can test without committing. You need Python and a copy of the files on your computer. To get the copy, click `Code` on your repository's page, then `Download ZIP`. Then unzip the ZIP file, if your computer has not already unzipped it. The unzipped folder is named after your repository, with `-main` at the end. Use the folder that holds `index.html`. Open a terminal in that folder and run `python -m http.server`. On some computers the command is `python3 -m http.server`. On Windows it may be `py -m http.server`. Then open http://localhost:8000/ in your browser. Changes you make in this copy are not on GitHub. To publish them, upload the changed files to your repository (see "Edit and add files on GitHub").
 
 ## When something goes wrong
 
