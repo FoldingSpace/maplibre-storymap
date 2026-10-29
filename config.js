@@ -24,10 +24,10 @@ var config = {
     // Move through the chapters by itself (off here)
     auto: false,
 
-    title: "Three places on the UBC Vancouver campus",
+    title: "Places on and around the UBC Vancouver campus",
     subtitle: "An example story. Replace it with your own.",
     byline: "By Your Name",
-    footer: "Data: <a href='https://github.com/UBCGeodata/ubc-geospatial-opendata' target='_blank'>UBC Geodata</a>. Imagery: EOxCloudless <a href='https://cloudless.eox.at' target='_blank'>https://cloudless.eox.at</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024). Basemap: <a href='https://openfreemap.org/' target='_blank'>OpenFreeMap</a>, <a href='https://openmaptiles.org/' target='_blank'>OpenMapTiles</a>, © <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap contributors</a>. Created using the <a href='https://github.com/opengeos/maplibre-gl-storymaps' target='_blank'>MapLibre Storytelling</a> template, inspired by <a href='https://github.com/mapbox/storytelling' target='_blank'>Mapbox Storytelling</a>.",
+    footer: "Data: <a href='https://github.com/UBCGeodata/ubc-geospatial-opendata' target='_blank'>UBC Geodata</a>. Imagery: EOxCloudless <a href='https://cloudless.eox.at' target='_blank'>https://cloudless.eox.at</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024). Elevation (chapter four): Terrain Tiles, accessed on 29 October 2026 from <a href='https://registry.opendata.aws/terrain-tiles' target='_blank'>https://registry.opendata.aws/terrain-tiles</a>. Videos: Musqueam Indian Band (chapter five) and Metro Vancouver (chapter six), on Vimeo. Basemap: <a href='https://openfreemap.org/' target='_blank'>OpenFreeMap</a>, <a href='https://openmaptiles.org/' target='_blank'>OpenMapTiles</a>, © <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap contributors</a>. Created using the <a href='https://github.com/opengeos/maplibre-gl-storymaps' target='_blank'>MapLibre Storytelling</a> template, inspired by <a href='https://github.com/mapbox/storytelling' target='_blank'>Mapbox Storytelling</a>.",
 
     // The layers your story can show. Each layer starts invisible.
     // A chapter shows a layer when the layer's id is in the chapter's show list.
@@ -75,9 +75,45 @@ var config = {
             alignment: "center",
             title: "Toward the water, from above",
             description: "Chapter three. The map changes to a second style: satellite imagery with place names on top. If you scroll back up, the map changes back to the first style. The imagery is made from many satellite pictures from 2024.",
-            location: { center: [-123.262, 49.263], zoom: 14, pitch: 30, bearing: 40 },
+            location: { center: [-123.2639, 49.2670], zoom: 14, pitch: 30, bearing: 40 },
             // This chapter's own style, in place of the style at the top
             style: "./satellite-style.json"
+        },
+        {
+            alignment: "left",
+            title: "Elevation and the colours of the imagery",
+            description: "Chapter four. It uses the same satellite style as chapter three. The chart below is calculated from the map's view. Each row of the chart is a range of elevation. The colours in a row are the most representative colours of the imagery at that elevation.",
+            location: { center: [-123.2580, 49.2690], zoom: 14.5, pitch: 0, bearing: 0 },
+            style: "./satellite-style.json",
+            exploreAllowed: true,
+            // Another web page, shown in the panel
+            showMarker: false,
+            embed: "./elevation-colours.html",
+            embedHeight: 200,
+            descriptionAfter: "Move the mouse over the elevation of a row. The map turns almost white outside that range of elevation. Move the mouse over a colour. Only the pixels close to that colour, at that elevation, stay clear. In this chapter, you can also drag the map and zoom with the + and − buttons. The chart then changes."
+        },
+        {
+            alignment: "left",
+            title: "The Musqueam Declaration",
+            description: "Chapter five. In 1976, Musqueam Elders and leaders signed the Musqueam Declaration. In it, the Musqueam people declare that they “hold aboriginal title to our land”. On 10 June 2026, Musqueam marked the Declaration's 50th anniversary. The map shows the area of the territory that the Declaration describes, from Howe Sound to the south bank of the Fraser River and out to the centre of Georgia Strait.",
+            location: { center: [-123.1996, 49.2303], zoom: 9.3, pitch: 0, bearing: 0 },
+            style: "./satellite-style.json",
+            // A video from Vimeo, shown in the panel
+            showMarker: false,
+            embed: "https://player.vimeo.com/video/1200153323?dnt=1",
+            embedHeight: 215,
+            descriptionAfter: "Video: Musqueam Indian Band, \"Celebrating The 50th Anniversary Of The Musqueam Declaration\" (2026). Read more on Musqueam's page about <a href='https://www.musqueam.bc.ca/celebrating-the-50th-anniversary-of-the-musqueam-declaration/' target='_blank'>the 50th anniversary</a>, or read <a href='https://www.musqueam.bc.ca/wp-content/uploads/2018/06/musqueam_declaration.pdf' target='_blank'>the Declaration</a> (PDF)."
+        },
+        {
+            alignment: "right",
+            title: "Pacific Spirit Regional Park",
+            description: "Chapter six. Pacific Spirit Regional Park lies between the campus and the City of Vancouver. Its forests, bog, creeks and beaches are habitat for many plants and animals.",
+            location: { center: [-123.2295, 49.2575], zoom: 12.6, pitch: 0, bearing: 0 },
+            style: "./satellite-style.json",
+            showMarker: false,
+            embed: "https://player.vimeo.com/video/490043811?h=45151a6105",
+            embedHeight: 215,
+            descriptionAfter: "Video: Metro Vancouver, \"Pacific Spirit Regional Park Profile\" (2020)."
         }
     ]
 };

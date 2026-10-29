@@ -1,6 +1,6 @@
 # A scrollytelling story map, with MapLibre GL JS 6
 
-This repository is a template for a scrollytelling story map. A reader scrolls down through panels of text. When a panel reaches the middle of the screen, the map moves to that panel's view. The map can also fade a layer in or out, or change its whole style. A chapter can let the reader explore the map with the mouse. You edit only `config.js`.
+This repository is a template for a scrollytelling story map. A reader scrolls down through panels of text. When a panel reaches the middle of the screen, the map moves to that panel's view. The map can also fade a layer in or out, or change its whole style. A chapter can let the reader explore the map with the mouse. A chapter can also show another web page, such as a chart or a video. You edit only `config.js`.
 
 See the example: https://foldingspace.github.io/maplibre-storymap/
 
@@ -61,6 +61,7 @@ Then change its settings. To remove a chapter, delete its whole block and one co
 | `image` | The path of an image to show in the panel, for example `"./images/my-photo.jpg"`. Upload the image first. You can leave `image` out. |
 | `location` | The map's view: `center` as `[longitude, latitude]`, `zoom`, `pitch` (tilt, in degrees) and `bearing` (rotation, in degrees). Use `helper.html` to get these numbers. |
 | `show` | The layers that this chapter shows. `show: ["landuse"]` shows the layer whose `id` is `landuse`, fully visible. For two layers, put a comma between them: `show: ["landuse", "my_layer"]`. To set each layer's opacity, write each `id` with an opacity between `{` and `}`: `show: { landuse: 0.6 }`. Opacity 0 is invisible. Opacity 1 is fully visible. In this form, the `id` has no quote marks. A chapter without `show` shows no layer. |
+| `embed`, `embedHeight`, `descriptionAfter` | `embed` is the address of another web page to show in the panel. `embedHeight` is its height in pixels (300 if you leave it out). `descriptionAfter` is text under the page. See "Show another web page in a chapter". |
 | `style` | The chapter's own basemap style, in place of the `style` at the top of `config.js`. You can leave `style` out. See "Change the style at a chapter". |
 
 More chapter settings are in "More settings".
@@ -140,7 +141,7 @@ To let the reader move and zoom the map in a chapter, add `exploreAllowed: true,
 
 ## Change the style at a chapter
 
-The third chapter has its own style: `style: "./satellite-style.json"`. A style is a file that lists a map's sources and layers. [Maputnik](https://maplibre.org/maputnik/) saves styles in this form. `satellite-style.json` has two sources: the [EOxCloudless](https://cloudless.eox.at) satellite tiles and [OpenFreeMap](https://openfreemap.org/)'s vector tiles. Its first layer draws the imagery. Its other layers draw road names, water names and place names on top.
+The third chapter has its own style: `style: "./satellite-style.json"`. The fourth to sixth chapters use this style too. A style is a file that lists a map's sources and layers. [Maputnik](https://maplibre.org/maputnik/) saves styles in this form. `satellite-style.json` has two sources: the [EOxCloudless](https://cloudless.eox.at) satellite tiles and [OpenFreeMap](https://openfreemap.org/)'s vector tiles. Its first layer draws the imagery. Its other layers draw road names, water names and place names on top.
 
 When the chapter becomes active, the new style replaces the basemap. The basemap does not fade. The layers in `layers` stay on the map. They are visible only if the chapter's `show` list names them. When the reader scrolls back up, the map changes back to the `style` at the top of `config.js`.
 
@@ -160,6 +161,24 @@ To fade imagery in over the basemap, use a layer instead. For example, paste thi
 ```
 
 A historical map served as tiles can fade in the same way.
+
+## Show another web page in a chapter
+
+A chapter can show another web page in its panel, for example a chart, a p5.js sketch or a page of your own. Add these lines to the chapter's block, just after its `{`:
+
+```js
+embed: "./my-page.html",
+embedHeight: 300,
+descriptionAfter: "Text under the page.",
+```
+
+The panel then shows the `title`, the `image`, the `description`, the page and the `descriptionAfter` text, in that order. The `embed` can be a path in your repository or an address on the web. With `alignment: "full"`, the panel is as wide as the window. The page fills the panel. The small overview map then covers a corner of the panel. Set `insetPosition` to a top corner, or set `inset` to `false`.
+
+If the page is taller than its box, the mouse wheel over it scrolls the page first, not the story. Move the mouse off the page to scroll the story. After you click inside the page, the arrow keys scroll that page. Click the map to scroll the story with the arrow keys again. Some websites do not let other sites show their pages. The panel then shows an empty box or an error. In Chrome the box is grey, with a picture of a torn page. The story shows no red box for this problem. Link to such a page in your `description` instead.
+
+The example's fifth and sixth chapters show videos from Vimeo. For a p5.js sketch, use its full-screen address: in the sketch's address, change `sketches` to `full`, for example `https://editor.p5js.org/YOUR-USERNAME/full/abc123`. For a video, open the video's page. Click `Share`, then `Embed`. Copy the address between the quote marks after `src=`, for example `embed: "https://player.vimeo.com/video/490043811?h=45151a6105",`.
+
+The example's fourth chapter shows `elevation-colours.html`. That page can use the story's `map`, because it comes from the same website. It fetches the imagery and the elevation for the map's view. Then it draws the chart.
 
 ## Run your own code at a chapter
 
@@ -200,6 +219,7 @@ More settings for a chapter:
 | `fade` | How long the layers take to fade in or out when this chapter becomes active, in milliseconds (1000 milliseconds is one second). Without `fade`, the fade takes 1500 milliseconds. |
 | `mapAnimation` | How the map moves to the view: `"flyTo"` (a curved flight, used when there is no `mapAnimation`), `"easeTo"` (a smooth slide) or `"jumpTo"` (no movement). |
 | `rotateAnimation` | `true` slowly turns the map once it arrives. |
+| `showMarker` | `false` hides the marker in this chapter (when `showMarkers` at the top of `config.js` is `true`). |
 | `exploreAllowed` | `true` lets the reader move and zoom the map in this chapter. See "Add interactivity to a chapter". |
 | `callback` | The name of your own function to run when the chapter becomes active. See "Run your own code at a chapter". |
 
@@ -210,11 +230,12 @@ More settings for a chapter:
 | `config.js` | Holds your story: the basemap, the title, your layers, your chapters and your own functions. | Yes. All your work for the story goes here. |
 | `index.html` | The page that readers open. It reads `config.js`, draws the map and the panels, and moves the map as the reader scrolls. | No. |
 | `helper.html` | A map that prints the view you are looking at, ready to copy into `config.js`. | No. You only use it. |
-| `satellite-style.json` | The style of the example's third chapter: satellite imagery with place names. | Only if you want to change that chapter's look. |
+| `satellite-style.json` | The style of the example's third to sixth chapters: satellite imagery with place names. | Only if you want to change those chapters' look. |
+| `elevation-colours.html` | The page that draws the chart in the example's fourth chapter. | No. |
 | `LICENSE` | The template's licence (MIT). | No. Keep it. |
 
 ## Credits
 
-Template: [MapLibre Storytelling](https://github.com/opengeos/maplibre-gl-storymaps) by opengeos (MIT licence, in [`LICENSE`](LICENSE)), inspired by [Mapbox Storytelling](https://github.com/mapbox/storytelling). Changed for GEOS 472 at UBC (October 2026): MapLibre GL JS 6.15.0 loaded as a module; scrollama pinned to 3.2.0; a keyless basemap (OpenFreeMap); the layers and their looks listed in `config.js`, with each chapter's `show` list; a `style` setting for each chapter; an `exploreAllowed` setting that lets the reader move and zoom the map in a chapter; problems in `config.js` shown on the page; a three-chapter example on the UBC Vancouver campus with UBC Geodata land use (coloured by planning status, with a mouseover) and EOxCloudless imagery in a second style; no stock photographs.
+Template: [MapLibre Storytelling](https://github.com/opengeos/maplibre-gl-storymaps) by opengeos (MIT licence, in [`LICENSE`](LICENSE)), inspired by [Mapbox Storytelling](https://github.com/mapbox/storytelling). Changed for GEOS 472 at UBC (October 2026): MapLibre GL JS 6.15.0 loaded as a module; scrollama pinned to 3.2.0; a keyless basemap (OpenFreeMap); the layers and their looks listed in `config.js`, with each chapter's `show` list; a `style` setting for each chapter; an `exploreAllowed` setting that lets the reader move and zoom the map in a chapter; problems in `config.js` shown on the page; a six-chapter example on and around the UBC Vancouver campus with UBC Geodata land use (coloured by planning status, with a mouseover) and EOxCloudless imagery in a second style; a chart of elevation and colour in an embedded page; two embedded videos; no stock photographs.
 
-Basemap: [OpenFreeMap](https://openfreemap.org/), [OpenMapTiles](https://openmaptiles.org/), © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). Example data: [UBC Geodata](https://github.com/UBCGeodata/ubc-geospatial-opendata). Imagery: EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024).
+Basemap: [OpenFreeMap](https://openfreemap.org/), [OpenMapTiles](https://openmaptiles.org/), © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). Example data: [UBC Geodata](https://github.com/UBCGeodata/ubc-geospatial-opendata). Imagery: EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024). Elevation: Terrain Tiles, accessed on 29 October 2026 from https://registry.opendata.aws/terrain-tiles. Videos: Musqueam Indian Band and Metro Vancouver, on Vimeo.

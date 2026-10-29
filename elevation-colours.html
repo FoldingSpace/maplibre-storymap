@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Elevation and the colours of the imagery</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 12px;
+            color: #222222;
+            background: #ffffff;
+        }
+
+        #status {
+            margin: 2px 0 6px 0;
+            color: #555555;
+        }
+
+        #chart {
+            display: grid;
+            grid-template-columns: 78px repeat(5, 1fr);
+            gap: 2px;
+        }
+
+        .label {
+            padding-right: 6px;
+            text-align: right;
+            white-space: nowrap;
+            line-height: 20px;
+        }
+
+        .label:hover {
+            font-weight: bold;
+        }
+
+        .cell {
+            height: 20px;
+        }
+
+        .cell:hover {
+            outline: 2px solid #000000;
+            outline-offset: -2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="status">Reading the map…</div>
+    <div id="chart"></div>
+
+    <script>
+        // This page is shown in a chapter of the story (embed: "./elevation-colours.html").
+        // It reads the story's map, because both pages come from the same website.
+        // For the map's current view, it fetches the satellite imagery and the elevation tiles.
+        // It samples both every few pixels.
+        // The chart is a grid. Each row is a range of elevation. Each column is one of the row's
+        // most representative colours of the imagery, chosen to differ from each other.
+        // Moving the mouse over a row's label or a cell washes out the other pixels of the map
+        // (covers them with white).
+
+        var map = window.parent.map;
+        var parentDocument = window.parent.document;
+
+        var STEP = 4;   // one sample for each 4 × 4 screen pixels
+        var IMAGERY = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg';
+        var ELEVATION = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+        var COLOURS = 5;            // colours in each row (the columns of the grid)
+        var MIN_DIFFERENCE = 40;    // the smallest difference between two chosen colours of a row
+        var COLOUR_DISTANCE = 30;   // how close a pixel's colour must be to the colour under the mouse
+
+        var samples = [];   // { x, y, elevation, r, g, b, band }
+        var tiles = {};     // tile pixels, kept once they are loaded
+
+        // Is this page's chapter the active one?
+        function chapterIsActive() {
+            var step = window.frameElement && window.frameElement.closest('.step');
+            return step && step.classList.contains('active');
+        }
+
+        // ---------- tiles ----------
+
+        function tileUrl(pattern, z, x, y) {
+            return pattern.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+        }
+
+        function loadTile(url) {
+            if (!tiles[url]) {
+                tiles[url] = fetch(url, { mode: 'cors' })
+                    .then(function (response) { return response.blob(); })
+                    .then(function (blob) { return createImageBitmap(blob); })
+                    .then(function (bitmap) {
+                        var canvas = new OffscreenCanvas(256, 256);
+                        var context = canvas.getContext('2d');
+                        context.drawImage(bitmap, 0, 0, 256, 256);
+                        return context.getImageData(0, 0, 256, 256).data;
+                    });
+            }
+            return tiles[url];
+        }
+
+        // The world pixel of a longitude and latitude at zoom z (256-pixel tiles, Web Mercator)
+        function worldPixel(lngLat, z) {
+            var size = 256 * Math.pow(2, z);
+            var latitude = lngLat.lat * Math.PI / 180;
+            var x = (lngLat.lng + 180) / 360 * size;
+            var y = (1 - Math.log(Math.tan(latitude) + 1 / Math.cos(latitude)) / Math.PI) / 2 * size;
+            return [x, y];
+        }
+
+        // ---------- sampling ----------
+
+        var run = 0;
+
+        async function update() {
+            if (!map || !chapterIsActive()) {
+                return;
+            }
+            run = run + 1;
+            var thisRun = run;
+            clearWash();
+            document.getElementById('status').innerText = 'Reading the map…';
+
+            var canvas = map.getCanvas();
+            var width = canvas.clientWidth;
+            var height = canvas.clientHeight;
+            var imageryZoom = Math.max(0, Math.min(16, Math.round(map.getZoom())));
+            var elevationZoom = Math.max(0, Math.min(15, Math.round(map.getZoom())));
+
+            // Where each sample falls in the imagery tiles and the elevation tiles
+            var points = [];
+            var urls = {};
+            for (var y = 0; y < height; y = y + STEP) {
+                for (var x = 0; x < width; x = x + STEP) {
+                    var lngLat = map.unproject([x + STEP / 2, y + STEP / 2]);
+                    var a = worldPixel(lngLat, imageryZoom);
+                    var b = worldPixel(lngLat, elevationZoom);
+                    var point = {
+                        x: x, y: y,
+                        imageryUrl: tileUrl(IMAGERY, imageryZoom, Math.floor(a[0] / 256), Math.floor(a[1] / 256)),
+                        imageryIndex: (Math.floor(a[1]) % 256) * 256 + (Math.floor(a[0]) % 256),
+                        elevationUrl: tileUrl(ELEVATION, elevationZoom, Math.floor(b[0] / 256), Math.floor(b[1] / 256)),
+                        elevationIndex: (Math.floor(b[1]) % 256) * 256 + (Math.floor(b[0]) % 256)
+                    };
+                    urls[point.imageryUrl] = true;
+                    urls[point.elevationUrl] = true;
+                    points.push(point);
+                }
+            }
+
+            var loaded = {};
+            try {
+                await Promise.all(Object.keys(urls).map(function (url) {
+                    return loadTile(url).then(function (pixels) { loaded[url] = pixels; });
+                }));
+            } catch (error) {
+                document.getElementById('status').innerText = 'The tiles could not be read.';
+                return;
+            }
+            if (thisRun !== run) {
+                return;   // the map moved again while the tiles loaded
+            }
+
+            samples = points.map(function (p) {
+                var image = loaded[p.imageryUrl];
+                var dem = loaded[p.elevationUrl];
+                var i = p.imageryIndex * 4;
+                var j = p.elevationIndex * 4;
+                // Terrarium tiles store elevation in metres as red × 256 + green + blue / 256 − 32768
+                var elevation = dem[j] * 256 + dem[j + 1] + dem[j + 2] / 256 - 32768;
+                return { x: p.x, y: p.y, elevation: elevation, r: image[i], g: image[i + 1], b: image[i + 2] };
+            });
+            drawChart();
+        }
+
+        // ---------- the chart ----------
+
+        var bands = [];
+
+        function drawChart() {
+            var land = samples.filter(function (s) { return s.elevation >= 0; });
+            var top = Math.max.apply(null, land.map(function (s) { return s.elevation; }).concat([1]));
+            var steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+            var step = steps.find(function (s) { return Math.ceil(top / s) <= 8; }) || 1000;
+
+            // The lowest band takes every sample below its top, including those below sea level
+            bands = [];
+            for (var low = 0; low < top; low = low + step) {
+                var label = low === 0 ? 'below ' + step + ' m' : low + '–' + (low + step) + ' m';
+                bands.push({ low: low, high: low + step, label: label, samples: [] });
+            }
+            samples.forEach(function (s) {
+                var index = Math.max(0, Math.min(bands.length - 1, Math.floor(s.elevation / step)));
+                bands[index].samples.push(s);
+                s.band = bands[index];
+            });
+
+            // The most representative colours of each band. Colours are first grouped in 16 levels
+            // of red, green and blue. The commonest group is chosen first. Each next group must
+            // differ from every group already chosen by at least MIN_DIFFERENCE.
+            bands.forEach(function (band) {
+                var groups = {};
+                band.samples.forEach(function (s) {
+                    var key = (s.r >> 4) + ',' + (s.g >> 4) + ',' + (s.b >> 4);
+                    if (!groups[key]) {
+                        groups[key] = { count: 0, r: 0, g: 0, b: 0 };
+                    }
+                    var group = groups[key];
+                    group.count = group.count + 1;
+                    group.r = group.r + s.r;
+                    group.g = group.g + s.g;
+                    group.b = group.b + s.b;
+                });
+                var ranked = Object.values(groups)
+                    .sort(function (p, q) { return q.count - p.count; })
+                    .map(function (group) {
+                        return {
+                            r: Math.round(group.r / group.count),
+                            g: Math.round(group.g / group.count),
+                            b: Math.round(group.b / group.count),
+                            share: group.count / band.samples.length
+                        };
+                    });
+                band.colours = [];
+                ranked.forEach(function (colour) {
+                    var different = band.colours.every(function (chosen) {
+                        return difference(colour, chosen) >= MIN_DIFFERENCE;
+                    });
+                    if (different && band.colours.length < COLOURS) {
+                        band.colours.push(colour);
+                    }
+                });
+            });
+
+            var chart = document.getElementById('chart');
+            chart.innerHTML = '';
+            bands.slice().reverse().forEach(function (band) {
+                if (band.samples.length === 0) {
+                    return;
+                }
+                var label = document.createElement('div');
+                label.className = 'label';
+                label.innerText = band.label;
+                label.addEventListener('mouseenter', function () { wash(band, null); });
+                label.addEventListener('mouseleave', clearWash);
+                chart.appendChild(label);
+                for (var k = 0; k < COLOURS; k++) {
+                    var cell = document.createElement('div');
+                    cell.className = 'cell';
+                    var colour = band.colours[k];
+                    if (colour) {
+                        cell.style.background = 'rgb(' + colour.r + ',' + colour.g + ',' + colour.b + ')';
+                        cell.title = Math.round(colour.share * 100) + ' % of this row';
+                        cell.addEventListener('mouseenter', wash.bind(null, band, colour));
+                        cell.addEventListener('mouseleave', clearWash);
+                    }
+                    chart.appendChild(cell);
+                }
+            });
+            document.getElementById('status').innerText = 'Elevation and colour in this view (' + samples.length + ' samples):';
+        }
+
+        // ---------- washing out the map ----------
+
+        function washCanvas() {
+            var canvas = parentDocument.getElementById('washout');
+            if (!canvas) {
+                canvas = parentDocument.createElement('canvas');
+                canvas.id = 'washout';
+                canvas.style.position = 'absolute';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.pointerEvents = 'none';
+                map.getContainer().appendChild(canvas);
+            }
+            var mapCanvas = map.getCanvas();
+            canvas.width = mapCanvas.clientWidth;
+            canvas.height = mapCanvas.clientHeight;
+            canvas.style.width = mapCanvas.clientWidth + 'px';
+            canvas.style.height = mapCanvas.clientHeight + 'px';
+            return canvas;
+        }
+
+        // The difference between two colours: the straight-line distance in red, green and blue
+        function difference(p, q) {
+            var dr = p.r - q.r;
+            var dg = p.g - q.g;
+            var db = p.b - q.b;
+            return Math.sqrt(dr * dr + dg * dg + db * db);
+        }
+
+        // Cover with white every sample outside the band, or (with a colour) far from that colour
+        function wash(band, colour) {
+            if (!chapterIsActive()) {
+                return;   // the chart's chapter is not the one on the map
+            }
+            var canvas = washCanvas();
+            var context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            samples.forEach(function (s) {
+                var keep = s.band === band;
+                if (keep && colour) {
+                    keep = difference(s, colour) <= COLOUR_DISTANCE;
+                }
+                if (!keep) {
+                    context.fillRect(s.x, s.y, STEP, STEP);
+                }
+            });
+        }
+
+        function clearWash() {
+            var canvas = parentDocument.getElementById('washout');
+            if (canvas) {
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // ---------- when to read the map again ----------
+
+        if (map) {
+            map.on('movestart', clearWash);
+            map.on('moveend', update);
+            window.parent.addEventListener('scroll', clearWash);
+            update();
+        } else {
+            document.getElementById('status').innerText = 'This page works only inside the story.';
+        }
+    </script>
+</body>
+
+</html>

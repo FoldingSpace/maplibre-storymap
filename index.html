@@ -375,6 +375,29 @@
                 chapter.appendChild(text);
             }
 
+            // Another web page shown in the panel (embed), with optional text after it (descriptionAfter)
+            if (record.embed) {
+                var frame = document.createElement('iframe');
+                frame.src = record.embed;
+                frame.title = record.title || 'An embedded page';
+                frame.style.width = '100%';
+                frame.style.height = (record.embedHeight || 300) + 'px';
+                frame.style.border = '0';
+                frame.style.marginTop = '8px';
+                // As in Vimeo's and YouTube's own embed code: full screen, picture-in-picture
+                frame.allow = 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share';
+                frame.allowFullscreen = true;
+                frame.referrerPolicy = 'strict-origin-when-cross-origin';
+                chapter.appendChild(frame);
+            }
+
+            if (record.descriptionAfter) {
+                var textAfter = document.createElement('p');
+                textAfter.innerHTML = record.descriptionAfter;
+                textAfter.style.marginTop = '8px';
+                chapter.appendChild(textAfter);
+            }
+
             container.setAttribute('id', record.id || 'chapter-' + (index + 1));
             container.classList.add('step');
             if (index === 0) {
@@ -762,6 +785,8 @@
 
             if (marker && chapter.location) {
                 marker.setLngLat(chapter.location.center);
+                // showMarker: false hides the marker in this chapter
+                marker.getElement().style.display = chapter.showMarker === false ? 'none' : '';
             }
             if (insetMap && insetMarker && chapter.location) {
                 insetMap.setCenter(chapter.location.center);
