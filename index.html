@@ -140,8 +140,9 @@
             .lefty,
             .righty,
             .fully {
-                width: 90vw;
-                margin: 0 auto;
+                /* Room on the right for the + and − buttons */
+                width: calc(100vw - 72px);
+                margin: 0 0 0 16px;
             }
         }
 
@@ -212,10 +213,10 @@
                 height: 96px;
             }
 
-            /* Above the map's credit line, which takes two lines on a phone */
+            /* Above the map's credit line, which can take four lines on a phone */
             #inset-map.bottom-right,
             #inset-map.bottom-left {
-                bottom: 72px;
+                bottom: 110px;
             }
         }
 
@@ -526,7 +527,13 @@
                 map.addControl(zoomButtons, 'top-right');
                 document.getElementById('map').classList.add('exploring');
             } else {
-                map.cooperativeGestures.disable();
+                // MapLibre hides its "Use two fingers" message a moment after it shows it.
+                // The message is turned off after that moment, so MapLibre shows no error.
+                setTimeout(function () {
+                    if (!exploring) {
+                        map.cooperativeGestures.disable();
+                    }
+                }, 300);
                 map.removeControl(zoomButtons);
                 document.getElementById('map').classList.remove('exploring');
             }
