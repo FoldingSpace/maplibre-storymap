@@ -4,7 +4,7 @@ This repository is a template for a scrollytelling story map. A reader scrolls d
 
 See the example: https://foldingspace.github.io/maplibre-storymap/
 
-This repository is the class copy of the [MapLibre Storytelling](https://github.com/opengeos/maplibre-gl-storymaps) template by opengeos. This copy loads MapLibre GL JS 6.15.0.
+This repository is based off of the [MapLibre Storytelling](https://github.com/opengeos/maplibre-gl-storymaps) template by opengeos, adapted for simplicity and lower-code use. It loads MapLibre GL JS 6.15.0.
 
 ## Make your own copy
 
